@@ -1,6 +1,10 @@
-import { NextFunction } from 'express';
-import { Request } from 'express';
-import { Response } from 'express';
+import { NextFunction, Request, Response } from "express";
+import { injectable } from "inversify";
+import { inversifyContainer } from "../../inversify.config";
+
+export interface IResponseLoggerMiddlewareService {
+  responseLogger(req: Request, res: Response, next: NextFunction): void;
+}
 
 /**
  * The ResponseLoggerMiddleware class represents the response logger middleware.
@@ -10,24 +14,26 @@ import { Response } from 'express';
  *
  * @class
  */
-class ResponseLoggerMiddleware {
-	public static responseLogger(
-		req: Request,
-		res: Response,
-		next: NextFunction
-	) {
-		next();
+@injectable()
+export class ResponseLoggerMiddlewareService
+  implements IResponseLoggerMiddlewareService
+{
+  public responseLogger(req: Request, res: Response, next: NextFunction) {
+    next();
 
-		res.on('finish', () => {
-			const log = `[${new Date().toISOString()}] <- ${
-				(req.headers.requestId as string).split('.')[2] ?? ''
-			} (${req.method}) ${req.baseUrl} ${res.statusCode} - ${
-				res.statusMessage
-			} | IP: ${req.ip} |`;
+    res.on("finish", () => {
+      const log = `[${new Date().toISOString()}] <- ${
+        (req.headers.requestId as string).split(".")[2] ?? ""
+      } (${req.method}) ${req.baseUrl} ${res.statusCode} - ${
+        res.statusMessage
+      } | IP: ${req.ip} |`;
 
-			console.log(log);
-		});
-	}
+      console.log(log);
+    });
+  }
 }
 
-export default ResponseLoggerMiddleware;
+export const ResponseLoggerMiddlewareServiceInstance = () =>
+  inversifyContainer().get<IResponseLoggerMiddlewareService>(
+    ResponseLoggerMiddlewareService,
+  );
